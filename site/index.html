@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>TP1 Otimização</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" href="style.css">
+
+    <!-- Custom styles for this template -->
+
+  </head>
+
+  <body>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+      <div class="container">
+        <a class="navbar-brand" href="#">TP1 Otimização</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarResponsive">
+          <ul class="navbar-nav ml-auto">
+            <li class="nav-item active">
+              <a class="nav-link" href="#">Início
+                <span class="sr-only">(current)</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Page Content -->
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-12 text-center">
+          
+          <h1 class="mt-5">Simplex</h1>
+          <p class="lead">Preencha as informações abaixo para que possamos executar o Simplex e mostrar o resultado de sua função objetiva!</p>
+
+          <hr>
+          
+          <div class="row">
+            <span>
+              <input type="radio" name="tipo" id="MAX"> Maximização
+              
+              <input type="radio" name="tipo" id="MIN"> Minimização
+            </span>
+          </div>          
+          
+          <div class="row">
+            <!-- numero de linhas -->
+            <span>
+              Informe o número de restrições:
+            </span>
+            <input id="linha" type="number" min="0">
+          </div>
+
+          <div class="row">
+            <!-- numero de Colunas -->
+            <span>
+              Informe o número de variáveis:
+            </span>
+            <input id="coluna" type="number" min="0">
+          </div>
+
+          <div class="row">
+            <input type="button" value="Gerar Tabela" onClick="addTable()">
+          </div>
+
+          <div class="row">
+            <table id="myTable">
+            </table>
+          </div>
+
+          <div class="row">
+            <input type="button" value="Calcular" onClick="calcular()">
+          </div>
+
+          <div class="row">
+            <table id="tableFinal">
+            </table>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+   
+
+
+    <!-- Bootstrap core JavaScript -->
+    <script src="vendor/jquery/jquery.min.js"></script>
+    <script src="vendor/popper/popper.min.js"></script>
+    <script src="vendor/bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript">
+      function addTable() {
+          var table = document.getElementById("myTable");
+          //pega o valor digitado e coloca na variavel de linha
+          var qtdLinha = document.getElementById("linha").value;
+          //pega o valor digitado e coloca na variavel de coluna
+          var qtdColuna = document.getElementById("coluna").value;
+
+          var variavelExcFolga = parseFloat(qtdColuna)+1;
+		  
+		      var row = table.insertRow();
+		  
+    		  row.innerHTML = "<th>FO ->" + 
+    						   "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Z=</th>";
+    		  for(var i = 0; i < qtdColuna; i++){						 
+    			var cell = row.insertCell();
+    			cell.innerHTML = "x" + (i+1) + ": &nbsp;<input class='variavelFO' size='1' value='0'>";
+    		  }		
+    		  
+              for (var i=0; i<qtdLinha; i++) {
+                //insere cada linha
+                var row = table.insertRow();
+                row.innerHTML = "<th>Restricao" + (i+1) + "-></th>";
+                
+                //var cell = row.insertCell();
+
+                //insere colune ML
+                //cell.innerHTML = "ML: &nbsp;<input class='ml'size='1' value='0'> &nbsp;&nbsp;";
+                for(var j=0; j<qtdColuna; j++){            
+                  //insere cada coluna na linha atual
+                  var cell = row.insertCell();                               
+                  cell.innerHTML = "x" + (j+1) + ": &nbsp;<input class='variaveis' size='1' value='0'>";
+                };
+                //insere o ML
+                var cell = row.insertCell();            
+                //cell.innerHTML = "x" + variavelExcFolga + ":&nbsp; <input class='excessofolga' size='1' value='0' >";			
+    			      cell.innerHTML = "<select class='operador'> " +
+    								"<option value='maiorigual'>>=</option>" +
+    								"<option value='menorigual'><=</option>" + 
+    							 "</select>" +
+    							 "&nbsp; <input class='excessofolga' size='1' value='0' >";       							 
+                variavelExcFolga++;
+              };
+              
+              //cria id unico pra cada input de variavel FO
+              var fo=0;
+              $('.variavelFO').each(function(){
+                  fo++;
+                  var newID='fo'+fo;
+                  $(this).attr('id',newID);
+                  $(this).val(fo);
+              });  
+              //cria id unico pra cada input de variavel
+              var x=0;
+              $('.variaveis').each(function(){
+                  x++;
+                  var newID='x'+x;
+                  $(this).attr('id',newID);
+                  $(this).val(x);
+              });         
+              //cria id unico pra cada input de excesso ou folga
+              var ef=variavelExcFolga-qtdLinha;
+              $('.excessofolga').each(function(){              
+                  var newID='ef'+ef;
+                  $(this).attr('id',newID);
+                  $(this).val(ef);
+                  ef++;
+              });
+    		      //cria id unico pra cada combobox de operador
+              var op=0;
+              $('.operador').each(function(){
+                  op++;
+                  var newID='op'+op;
+                  $(this).attr('id',newID);
+                  $(this).val(op);
+              });
+      };
+
+      function calcular() {
+        var table2 = document.getElementById("tableFinal");
+        //pega o valor digitado e coloca na variavel de linha
+        var qtdLinha = document.getElementById("linha").value;
+        //pega o valor digitado e coloca na variavel de coluna
+        var qtdColuna = document.getElementById("coluna").value;
+
+        var row = table2.insertRow();
+        //imprime n e m
+        var n = parseFloat(qtdLinha)+1;
+        var m = parseFloat(qtdColuna)+1;
+        //document.write("n="+n+";m="+m+";");
+        var cell = row.insertCell();
+        cell.innerHTML = "n="+n+";m="+m+";";
+
+        var bla = new Array(n);
+        var testee = 1;
+        for (var i = 0; i < n; i++) {
+          bla[i] = new Array(m);
+        }
+
+        //variaveis para montar o array final
+        var linhaa = 0;
+        var colunaa = 0;
+
+        //montando a matriz
+        //se escolher MAX
+        if(document.getElementById('MAX').checked){
+          //FO
+          var row = table2.insertRow();
+          for (var i=0; i<m; i++) {
+            var cell = row.insertCell();
+            if(i==0){
+              var num = parseInt(0);
+              //daria um insere detro [0][0]
+              bla[linhaa][i] = 0;
+            }else{
+              var num = parseFloat(document.getElementById('fo'+i).value);
+              bla[linhaa][i] = num;
+            }
+            cell.innerHTML = num;
+          };
+
+          linhaa++;
+          colunaa=0;
+
+          //restricoes
+          var eefe = parseFloat(qtdColuna)+1;
+          var xis = 1;
+          for (var i=0; i<qtdLinha; i++) {
+            var row = table2.insertRow();
+            var cell = row.insertCell();
+            //se for >= troca o sinal do ML
+            if((document.getElementById("op"+(i+1)).value) == "maiorigual"){
+              num = parseFloat(document.getElementById("ef"+eefe).value)*(-1);
+              cell.innerHTML = num;
+              bla[linhaa][colunaa] = num;
+              colunaa++;
+            }
+            else{
+              //se for <= não troca o sinal
+              num = parseFloat(document.getElementById("ef"+eefe).value);
+              cell.innerHTML = num;
+              bla[linhaa][colunaa] = num;
+              colunaa++;
+            }
+            eefe++;
+
+            //se for >= troca o sinal da linha
+            if((document.getElementById("op"+(i+1)).value) == "maiorigual"){
+              for(var j=0; j<qtdColuna; j++){
+                var cell = row.insertCell();
+                num = parseFloat(document.getElementById("x"+xis).value)*(-1);
+                cell.innerHTML = num;
+                bla[linhaa][colunaa] =num;
+                colunaa++;
+                xis++;
+              }
+            }
+            else{
+            //se for <= não troca o sinal
+              for(var j=0; j<qtdColuna; j++){
+                var cell = row.insertCell();
+                num = parseFloat(document.getElementById("x"+xis).value);
+                cell.innerHTML = num;
+                bla[linhaa][colunaa] =num;
+                colunaa++;
+                xis++;
+              }
+            }
+            linhaa++;
+            colunaa=0;
+          }
+          console.log("MAX");
+          console.log(bla);
+        }
+        else{
+          //se escolher MIN
+          //FO
+          var row = table2.insertRow();
+          for (var i=0; i<m; i++) {
+            var cell = row.insertCell();
+            if(i==0){
+              var num = parseFloat(0);
+            }else{
+              var num = parseFloat(document.getElementById('fo'+i).value);
+            }
+            //multiplicar por -1
+            num = parseFloat(num)*(-1);
+            cell.innerHTML = num;
+            bla[linhaa][i] = num;
+          };
+
+          linhaa++;
+          colunaa = 0;
+
+          //restricoes
+          var eefe = parseFloat(qtdColuna)+1;
+          var xis = 1;
+          for (var i=0; i<qtdLinha; i++) {
+            var row = table2.insertRow();
+            var cell = row.insertCell();
+            //se for >= troca o sinal do ML 2x (continua o mesmo)
+            if((document.getElementById("op"+(i+1)).value) == "menorigual"){
+              num = parseFloat(document.getElementById("ef"+eefe).value);
+              cell.innerHTML = num;
+              bla[linhaa][colunaa] = num;
+              colunaa++;
+            }
+            else{
+            //se for <= troca o sinal 1x
+              num = parseFloat(document.getElementById("ef"+eefe).value)*(-1);
+              cell.innerHTML = num;
+              bla[linhaa][colunaa] = num;
+              colunaa++;
+            }
+            eefe++;
+
+            if((document.getElementById("op"+(i+1)).value) == "menorigual"){
+              for(var j=0; j<qtdColuna; j++){
+                var cell = row.insertCell();
+                num = parseFloat(document.getElementById("x"+xis).value);
+                cell.innerHTML = num;
+                bla[linhaa][colunaa] = num;
+                colunaa++;
+                xis++;
+              };
+            }
+            else{
+              for(var j=0; j<qtdColuna; j++){
+                var cell = row.insertCell();
+                //multiplicar por -1
+                num = parseFloat(document.getElementById("x"+xis).value)*(-1);
+                cell.innerHTML = num;
+                bla[linhaa][colunaa] = num;
+                colunaa++;
+                xis++;
+              }
+            }
+            linhaa++;
+            colunaa=0;
+          }
+          console.log("MIN");
+          console.log(bla);
+        }//fim else
+
+        var blob = new Blob([n,",",m,",",bla], {type: "text/plain;charset=utf-8"});
+        saveAs(blob, "entrada.txt");
+      }
+
+      var saveAs = saveAs || (function(view) {
+        "use strict";
+        // IE <10 is explicitly unsupported
+        if (typeof view === "undefined" || typeof navigator !== "undefined" && /MSIE [1-9]\./.test(navigator.userAgent)) {
+          return;
+        }
+        var
+            doc = view.document
+            // only get URL when necessary in case Blob.js hasn't overridden it yet
+          , get_URL = function() {
+            return view.URL || view.webkitURL || view;
+          }
+          , save_link = doc.createElementNS("http://www.w3.org/1999/xhtml", "a")
+          , can_use_save_link = "download" in save_link
+          , click = function(node) {
+            var event = new MouseEvent("click");
+            node.dispatchEvent(event);
+          }
+          , is_safari = /constructor/i.test(view.HTMLElement) || view.safari
+          , is_chrome_ios =/CriOS\/[\d]+/.test(navigator.userAgent)
+          , throw_outside = function(ex) {
+            (view.setImmediate || view.setTimeout)(function() {
+              throw ex;
+            }, 0);
+          }
+          , force_saveable_type = "application/octet-stream"
+          // the Blob API is fundamentally broken as there is no "downloadfinished" event to subscribe to
+          , arbitrary_revoke_timeout = 1000 * 40 // in ms
+          , revoke = function(file) {
+            var revoker = function() {
+              if (typeof file === "string") { // file is an object URL
+                get_URL().revokeObjectURL(file);
+              } else { // file is a File
+                file.remove();
+              }
+            };
+            setTimeout(revoker, arbitrary_revoke_timeout);
+          }
+          , dispatch = function(filesaver, event_types, event) {
+            event_types = [].concat(event_types);
+            var i = event_types.length;
+            while (i--) {
+              var listener = filesaver["on" + event_types[i]];
+              if (typeof listener === "function") {
+                try {
+                  listener.call(filesaver, event || filesaver);
+                } catch (ex) {
+                  throw_outside(ex);
+                }
+              }
+            }
+          }
+          , auto_bom = function(blob) {
+            // prepend BOM for UTF-8 XML and text/* types (including HTML)
+            // note: your browser will automatically convert UTF-16 U+FEFF to EF BB BF
+            if (/^\s*(?:text\/\S*|application\/xml|\S*\/\S*\+xml)\s*;.*charset\s*=\s*utf-8/i.test(blob.type)) {
+              return new Blob([String.fromCharCode(0xFEFF), blob], {type: blob.type});
+            }
+            return blob;
+          }
+          , FileSaver = function(blob, name, no_auto_bom) {
+            if (!no_auto_bom) {
+              blob = auto_bom(blob);
+            }
+            // First try a.download, then web filesystem, then object URLs
+            var
+                filesaver = this
+              , type = blob.type
+              , force = type === force_saveable_type
+              , object_url
+              , dispatch_all = function() {
+                dispatch(filesaver, "writestart progress write writeend".split(" "));
+              }
+              // on any filesys errors revert to saving with object URLs
+              , fs_error = function() {
+                if ((is_chrome_ios || (force && is_safari)) && view.FileReader) {
+                  // Safari doesn't allow downloading of blob urls
+                  var reader = new FileReader();
+                  reader.onloadend = function() {
+                    var url = is_chrome_ios ? reader.result : reader.result.replace(/^data:[^;]*;/, 'data:attachment/file;');
+                    var popup = view.open(url, '_blank');
+                    if(!popup) view.location.href = url;
+                    url=undefined; // release reference before dispatching
+                    filesaver.readyState = filesaver.DONE;
+                    dispatch_all();
+                  };
+                  reader.readAsDataURL(blob);
+                  filesaver.readyState = filesaver.INIT;
+                  return;
+                }
+                // don't create more object URLs than needed
+                if (!object_url) {
+                  object_url = get_URL().createObjectURL(blob);
+                }
+                if (force) {
+                  view.location.href = object_url;
+                } else {
+                  var opened = view.open(object_url, "_blank");
+                  if (!opened) {
+                    // Apple does not allow window.open, see https://developer.apple.com/library/safari/documentation/Tools/Conceptual/SafariExtensionGuide/WorkingwithWindowsandTabs/WorkingwithWindowsandTabs.html
+                    view.location.href = object_url;
+                  }
+                }
+                filesaver.readyState = filesaver.DONE;
+                dispatch_all();
+                revoke(object_url);
+              }
+            ;
+            filesaver.readyState = filesaver.INIT;
+
+            if (can_use_save_link) {
+              object_url = get_URL().createObjectURL(blob);
+              setTimeout(function() {
+                save_link.href = object_url;
+                save_link.download = name;
+                click(save_link);
+                dispatch_all();
+                revoke(object_url);
+                filesaver.readyState = filesaver.DONE;
+              });
+              return;
+            }
+
+            fs_error();
+          }
+          , FS_proto = FileSaver.prototype
+          , saveAs = function(blob, name, no_auto_bom) {
+            return new FileSaver(blob, name || blob.name || "download", no_auto_bom);
+          }
+        ;
+        // IE 10+ (native saveAs)
+        if (typeof navigator !== "undefined" && navigator.msSaveOrOpenBlob) {
+          return function(blob, name, no_auto_bom) {
+            name = name || blob.name || "download";
+
+            if (!no_auto_bom) {
+              blob = auto_bom(blob);
+            }
+            return navigator.msSaveOrOpenBlob(blob, name);
+          };
+        }
+
+        FS_proto.abort = function(){};
+        FS_proto.readyState = FS_proto.INIT = 0;
+        FS_proto.WRITING = 1;
+        FS_proto.DONE = 2;
+
+        FS_proto.error =
+        FS_proto.onwritestart =
+        FS_proto.onprogress =
+        FS_proto.onwrite =
+        FS_proto.onabort =
+        FS_proto.onerror =
+        FS_proto.onwriteend =
+          null;
+
+        return saveAs;
+        }(
+             typeof self !== "undefined" && self
+          || typeof window !== "undefined" && window
+          || this.content
+        ));
+        // `self` is undefined in Firefox for Android content script context
+        // while `this` is nsIContentFrameMessageManager
+        // with an attribute `content` that corresponds to the window
+
+        if (typeof module !== "undefined" && module.exports) {
+          module.exports.saveAs = saveAs;
+        } else if ((typeof define !== "undefined" && define !== null) && (define.amd !== null)) {
+          define("FileSaver.js", function() {
+            return saveAs;
+          });
+      }
+    </script>
+  </body>
+</html>
